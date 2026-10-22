@@ -1,0 +1,2565 @@
+﻿<!-- includes/control_panel.php - V8.7.3 COMPACT LOCK -->
+<?php
+$cpUserPlan = $_SESSION['user_plan'] ?? 'free';
+$cpIsAdmin = !empty($_SESSION['is_admin']);
+$cpIsPremium = $cpIsAdmin || in_array($cpUserPlan, ['pro', 'business', 'weekly', 'monthly']);
+$cpIsFree = !$cpIsPremium;
+$cpDefaultQuality = ($cpIsFree && !$cpIsAdmin) ? '720p' : '1080p';
+?>
+<div class="control-panel" id="controlPanel" style="display:none;">
+    <div class="panel-title">
+        <i class="fas fa-sliders-h"></i> Pengaturan
+        <?php if ($cpIsAdmin): ?>
+            <span class="ai-badge" style="background:linear-gradient(135deg,#8b5cf6,#f59e0b);color:white;">👑 ADMIN MODE</span>
+        <?php else: ?>
+            <span class="ai-badge"><i class="fas fa-robot"></i> AI Aktif</span>
+        <?php endif; ?>
+    </div>
+
+    <div class="info-box">
+        <i class="fas fa-lightbulb"></i>
+        <div>
+            <strong>Cara Kerja AI:</strong>
+            <ol>
+                <li>🔇 Deteksi &amp; hapus jeda diam</li>
+                <li>🔁 Deteksi &amp; hapus kata/frasa berulang</li>
+                <li>🗣️ Deteksi gagap &amp; salah mulai</li>
+                <li>💬 Deteksi kata pengisi (eh, em, hmm)</li>
+                <li>✂️ Potong &amp; sambung video dengan halus</li>
+                <li>🔥 Subtitle otomatis (langsung menyatu di video)</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- KEKUATAN POTONG -->
+    <div class="setting-group">
+        <label><i class="fas fa-robot" style="color:var(--ai-color);"></i> Kekuatan Potong</label>
+        <select id="aggressiveness">
+            <option value="content" selected>🎬 Content Creator (Paling Rapi) — RECOMMENDED</option>
+            <option value="medium">🟡 Sedang – Standar</option>
+            <option value="high">🔴 Berat – Hapus banyak</option>
+            <option value="low">🟢 Ringan – Hapus sedikit</option>
+        </select>
+        <div class="hint">🎬 <strong>Content Creator</strong> = jump-cut ketat seperti YouTuber.</div>
+    </div>
+
+    <!-- CONTENT CREATOR MODE -->
+    <div class="setting-group">
+        <label class="checkbox-group">
+            <input type="checkbox" id="contentCreatorMode" checked>
+            <span><i class="fas fa-video" style="color:var(--ai-color);"></i> 🎬 Content Creator Mode</span>
+        </label>
+    </div>
+
+    <!-- AI DETEKSI -->
+    <div class="setting-group">
+        <label class="checkbox-group">
+            <input type="checkbox" id="enableAI" checked>
+            <span><i class="fas fa-robot" style="color:var(--ai-color);"></i> 🧠 AI Deteksi Kata Berulang</span>
+        </label>
+    </div>
+
+    <!-- SUBTITLE (BURN ONLY) -->
+    <div class="setting-group">
+        <label class="checkbox-group">
+            <input type="checkbox" id="enableBurnSubtitle" checked>
+            <span><i class="fas fa-fire" style="color:#ef4444;"></i> 🔥 Subtitle</span>
+        </label>
+        <div class="hint">Subtitle otomatis dibuat &amp; langsung menyatu ke dalam video (font Rubik).</div>
+    </div>
+
+    <!-- WHISPER MODEL -->
+    <div class="setting-group">
+        <label><i class="fas fa-microchip"></i> Model Whisper</label>
+        <?php if ($cpIsFree && !$cpIsAdmin): ?>
+            <select id="whisperModel" disabled>
+                <option value="small" selected>Small (akurat) — Free</option>
+            </select>
+            <div class="hint">🔒 Model <strong>tiny</strong> untuk Free. <a href="harga.php" style="color:var(--primary);font-weight:600;">Upgrade</a> untuk lebih akurat.</div>
+        <?php else: ?>
+            <select id="whisperModel">
+                <option value="base" selected>Base (seimbang)</option>
+                <option value="tiny">Tiny (cepat)</option>
+                <option value="small">Small (akurat)</option>
+            </select>
+        <?php endif; ?>
+    </div>
+
+    <!-- HIDDEN FIELDS -->
+    <input type="hidden" id="preset" value="<?= $cpDefaultQuality ?>">
+    <input type="hidden" id="generateSubtitle" value="false">
+    <input type="hidden" id="enableScene" value="false">
+    <input type="hidden" id="enableNoise" value="false">
+    <input type="hidden" id="enableVerticalCrop" value="false">
+    <input type="hidden" id="enableThumbnail" value="false">
+    <input type="hidden" id="enableMusic" value="false">
+    <input type="hidden" id="enableMultiFormat" value="false">
+    <input type="hidden" id="enableAutoChapter" value="false">
+    <input type="hidden" id="enableMultiLang" value="false">
+
+    <!-- ============================================================ -->
+    <!-- AI VOICE OVER                                                -->
+    <!-- ============================================================ -->
+    <?php if ($cpIsFree && !$cpIsAdmin): ?>
+        <!-- COMPACT LOCK CARD (Free User) -->
+        <div class="compact-lock-card" id="voiceoverSection">
+            <div class="clc-icon">🎤</div>
+            <div class="clc-body">
+                <div class="clc-title">
+                    AI Voice Over
+                    <span class="clc-pro">PRO</span>
+                </div>
+                <div class="clc-desc">Ubah teks jadi suara profesional — untuk faceless content</div>
+            </div>
+            <a href="harga.php" class="clc-btn">
+                <i class="fas fa-crown"></i> Upgrade
+            </a>
+        </div>
+    <?php else: ?>
+        <!-- FULL CONTENT (Pro/Admin) -->
+        <div class="setting-group" id="voiceoverSection">
+            <label>
+                <i class="fas fa-microphone" style="color:#8b5cf6;"></i>
+                AI Voice Over
+                <span class="beta-badge beta-purple">BETA</span>
+            </label>
+            <div class="hint" style="margin-bottom:8px;">
+                Tulis script → AI generate suara → download MP3.
+            </div>
+
+            <textarea id="voText"
+                class="panel-textarea vo-textarea"
+                placeholder="Tulis script untuk voice over...&#10;&#10;Contoh: Halo teman-teman, di video kali ini saya akan menunjukkan cara mudah membuat konten viral..."
+                maxlength="5000"></textarea>
+
+            <div class="panel-row">
+                <select id="voVoice" class="panel-select vo-select">
+                    <option value="id-ID-ArdiNeural">Ardi — Pria Indonesia</option>
+                    <option value="id-ID-GadisNeural">Gadis — Wanita Indonesia</option>
+                    <option value="en-US-GuyNeural">Guy — English Male</option>
+                    <option value="en-US-JennyNeural">Jenny — English Female</option>
+                </select>
+                <button type="button" id="voGenerateBtn" class="panel-btn vo-btn-generate">
+                    <i class="fas fa-wand-magic-sparkles"></i> Generate
+                </button>
+            </div>
+
+            <div id="voResult" class="panel-result vo-result" style="display:none;">
+                <audio id="voPlayer" controls style="width:100%;"></audio>
+                <div class="panel-row panel-row-tight">
+                    <button type="button" id="voDownloadBtn" class="panel-btn-outline vo-btn-outline">
+                        <i class="fas fa-download"></i> Download MP3
+                    </button>
+                    <button type="button" id="voResetBtn" class="panel-btn-ghost">Reset</button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- ============================================================ -->
+    <!-- MULTI-BAHASA TRANSLATE                                       -->
+    <!-- ============================================================ -->
+    <?php if ($cpIsFree && !$cpIsAdmin): ?>
+        <!-- COMPACT LOCK CARD (Free User) -->
+        <div class="compact-lock-card" id="translateSection">
+            <div class="clc-icon">🌐</div>
+            <div class="clc-body">
+                <div class="clc-title">
+                    Terjemahan Multi-Bahasa
+                    <span class="clc-pro">PRO</span>
+                </div>
+                <div class="clc-desc">Terjemahkan ke 14 bahasa — tembus pasar global</div>
+            </div>
+            <a href="harga.php" class="clc-btn">
+                <i class="fas fa-crown"></i> Upgrade
+            </a>
+        </div>
+    <?php else: ?>
+        <!-- FULL CONTENT (Pro/Admin) -->
+        <div class="setting-group translate-section" id="translateSection">
+            <label class="section-label">
+                <i class="fas fa-language" style="color:#06b6d4;"></i>
+                Terjemahan Multi-Bahasa
+                <span class="beta-badge beta-cyan">BETA</span>
+            </label>
+            <div class="hint" style="margin-bottom:10px;">
+                Terjemahkan subtitle/script ke berbagai bahasa. Cocok untuk konten global.
+            </div>
+
+            <textarea id="trText"
+                class="panel-textarea tr-textarea"
+                placeholder="Tempel teks Indonesia di sini...&#10;&#10;Contoh: Halo teman-teman, jangan lupa subscribe dan nyalakan lonceng ya!"
+                maxlength="5000"></textarea>
+
+            <div class="tr-lang-row">
+                <div class="tr-lang-prefix">
+                    <span class="tr-from-tag">ID</span>
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+                <select id="trTargetLang" class="panel-select tr-select">
+                    <option value="en">[EN] English</option>
+                    <option value="ja">[JA] 日本語 (Japanese)</option>
+                    <option value="zh">[ZH] 中文 (Chinese)</option>
+                    <option value="ko">[KO] 한국어 (Korean)</option>
+                    <option value="th">[TH] ไทย (Thai)</option>
+                    <option value="vi">[VI] Tiếng Việt (Vietnamese)</option>
+                    <option value="ms">[MS] Bahasa Melayu</option>
+                    <option value="hi">[HI] हिन्दी (Hindi)</option>
+                    <option value="es">[ES] Español (Spanish)</option>
+                    <option value="fr">[FR] Français (French)</option>
+                    <option value="de">[DE] Deutsch (German)</option>
+                    <option value="pt">[PT] Português (Portuguese)</option>
+                    <option value="ru">[RU] Русский (Russian)</option>
+                    <option value="ar">[AR] العربية (Arabic)</option>
+                </select>
+                <button type="button" id="trTranslateBtn" class="panel-btn tr-btn-translate">
+                    <i class="fas fa-language"></i> Translate
+                </button>
+            </div>
+
+            <div id="trResult" class="panel-result tr-result" style="display:none;">
+                <div class="tr-result-head">
+                    <span id="trResultLang">English</span>
+                    <span id="trResultProvider" class="tr-result-provider"></span>
+                </div>
+                <div id="trResultText" class="tr-result-text"></div>
+                <div class="panel-row panel-row-tight">
+                    <button type="button" id="trCopyBtn" class="panel-btn-outline tr-btn-copy">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button type="button" id="trResetBtn" class="panel-btn-ghost">Reset</button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- TOMBOL PROSES -->
+    <button class="btn-primary" id="rapikanBtn" style="margin-top:20px;">
+        <i class="fas fa-wand-sparkles"></i> <span id="rapikanBtnText">Rapikan Video Sekarang</span>
+    </button>
+
+    <div id="quotaExhaustedNotice" style="display:none;margin-top:12px;padding:16px 18px;background:linear-gradient(135deg,rgba(239,68,68,0.10),rgba(239,68,68,0.02));border:1px solid rgba(239,68,68,0.30);border-radius:14px;text-align:center;">
+        <div style="font-size:1.8rem;margin-bottom:6px;">🚫</div>
+        <div style="font-weight:700;color:#ef4444;font-size:0.95rem;margin-bottom:6px;">Kuota Harian Habis</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.5;margin-bottom:12px;">
+            Anda sudah pakai <strong>3 video hari ini</strong>.<br>
+            Reset besok, atau upgrade untuk upload tanpa batas.
+        </div>
+        <a href="harga.php" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border-radius:50px;font-weight:700;font-size:0.82rem;text-decoration:none;">
+            <i class="fas fa-crown"></i> Upgrade ke Premium
+        </a>
+    </div>
+
+    <?php if ($cpIsFree && !$cpIsAdmin): ?>
+        <div class="watermark-notice">
+            <i class="fas fa-water"></i>
+            Video akan memiliki watermark "Clipora".
+            <a href="harga.php" style="color:var(--primary);font-weight:600;">Upgrade</a>
+            untuk hapus watermark.
+        </div>
+    <?php endif; ?>
+
+    <!-- PROGRESS BOX -->
+    <div class="progress-box" id="progressContainer" style="display:none;">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <div class="progress-status">
+            <div class="spinner"></div><span id="progressText">Memproses video...</span>
+        </div>
+        <div class="progress-text" id="progressDetail"></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- EDITOR TIMELINE                                               -->
+    <!-- ============================================================ -->
+    <div id="editorContainer" style="display:none;margin-top:24px;">
+        <div class="timeline-editor-wrap" id="timelineEditorWrap">
+
+            <div class="te-header">
+                <div>
+                    <h3><i class="fas fa-film"></i> Edit Video Anda</h3>
+                    <p class="te-subtitle">Klik segmen merah untuk ON/OFF, atau drag ujungnya untuk atur</p>
+                </div>
+                <button id="editorCloseBtn" class="te-close-btn" title="Batal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="te-player-wrap">
+                <video id="editorVideo" controls preload="metadata"></video>
+                <div class="te-player-overlay">
+                    <button class="te-play-btn" id="tePlayBtn" title="Play/Pause">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                <div class="te-preview-badge" id="tePreviewBadge" style="display:none;">
+                    <i class="fas fa-bolt"></i> PREVIEW HASIL
+                </div>
+            </div>
+
+            <div class="te-stats" id="editorStats"></div>
+
+            <div class="te-quick-mode">
+                <div class="te-qm-header">
+                    <i class="fas fa-bolt"></i>
+                    <span>Mode Cepat</span>
+                    <small>— Pilih sesuai kebutuhan</small>
+                </div>
+                <div class="te-qm-buttons">
+                    <button class="te-qm-btn active" data-mode="aggressive" type="button">
+                        <div class="te-qm-icon">🎯</div>
+                        <div class="te-qm-text"><strong>Hemat</strong><small>Potong maksimal</small></div>
+                        <div class="te-qm-badge">Podcast</div>
+                    </button>
+                    <button class="te-qm-btn" data-mode="balanced" type="button">
+                        <div class="te-qm-icon">⚖️</div>
+                        <div class="te-qm-text"><strong>Seimbang</strong><small>Potong wajar</small></div>
+                        <div class="te-qm-badge">Vlog</div>
+                    </button>
+                    <button class="te-qm-btn" data-mode="gentle" type="button">
+                        <div class="te-qm-icon">✨</div>
+                        <div class="te-qm-text"><strong>Halus</strong><small>Potong sedikit</small></div>
+                        <div class="te-qm-badge">Wawancara</div>
+                    </button>
+                </div>
+            </div>
+
+            <div class="te-timeline-section">
+                <div class="te-legend-compact">
+                    <span class="te-legend-item"><span class="te-legend-dot cut"></span><strong>Merah</strong> = akan dipotong</span>
+                    <span class="te-legend-sep">•</span>
+                    <span class="te-legend-item"><span class="te-legend-dot keep"></span><strong>Tanpa warna</strong> = dipertahankan</span>
+                </div>
+
+                <div class="te-timeline-viewport" id="teTimelineViewport">
+                    <div class="te-timeline-zoom-wrap" id="teTimelineZoomWrap">
+                        <div class="te-time-ruler" id="teTimeRuler"></div>
+                        <div class="te-timeline" id="teTimeline">
+                            <div class="te-timeline-track" id="teTrack">
+                                <div class="te-filmstrip" id="teFilmstrip"></div>
+                                <div class="te-timeline-bg"></div>
+                            </div>
+                            <div class="te-playhead" id="tePlayhead">
+                                <div class="te-playhead-handle"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="te-timeline-hint">
+                    <span><i class="fas fa-hand-pointer"></i> Klik segmen = ON/OFF</span>
+                    <span><i class="fas fa-arrows-alt-h"></i> Drag ujung = atur batas</span>
+                </div>
+            </div>
+
+            <div class="te-preview-play-bar">
+                <button class="te-preview-play-btn" id="tePlayPreviewBig" title="Putar preview hasil">
+                    <span class="te-ppb-icon-circle"><i class="fas fa-play" id="tePpbIcon"></i></span>
+                    <span class="te-ppb-text">
+                        <strong id="tePpbTitle">Putar Preview Hasil</strong>
+                        <small id="tePpbSubtitle">Dengar &amp; lihat hasil potongan sebelum render final</small>
+                    </span>
+                </button>
+                <div class="te-preview-progress-row">
+                    <span class="te-preview-time" id="tePreviewTime">00:00 / 00:00</span>
+                    <span class="te-preview-live-badge" id="tePreviewLiveBadge" style="display:none;">
+                        <span class="te-live-dot"></span> SEDANG SKIP
+                    </span>
+                </div>
+            </div>
+
+            <div class="te-segment-info" id="teSegmentInfo" style="display:none;">
+                <div class="te-si-main">
+                    <div class="te-si-icon" id="teSiIcon">🔁</div>
+                    <div class="te-si-body">
+                        <div class="te-si-reason" id="teSiReason">Frasa berulang</div>
+                        <div class="te-si-time" id="teSiTime">0.00s → 0.00s (0.00s)</div>
+                    </div>
+                    <button class="te-si-delete" id="teSiDelete" title="Hapus segmen dari daftar">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+                <div class="te-si-actions">
+                    <button class="te-si-action keep" id="teSiKeep" type="button">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Biarkan</span>
+                        <small>tidak dipotong</small>
+                    </button>
+                    <button class="te-si-action cut" id="teSiCut" type="button">
+                        <i class="fas fa-scissors"></i>
+                        <span>Potong</span>
+                        <small>hilang dari hasil</small>
+                    </button>
+                </div>
+            </div>
+
+            <div class="te-quality-bar">
+                <div class="te-quality-head">
+                    <label class="te-quality-label"><i class="fas fa-expand"></i> Kualitas Video</label>
+                    <small class="te-quality-hint">Pilih sebelum klik "Render Video Final"</small>
+                </div>
+                <div class="te-quality-row">
+                    <select id="qualitySelect" class="te-quality-select">
+                        <?php if ($cpIsFree && !$cpIsAdmin): ?>
+                            <option value="1080p" disabled>🔒 1080p Full HD — Khusus Premium</option>
+                            <option value="720p" selected>📱 720p HD — Direkomendasikan</option>
+                            <option value="480p">⚡ 480p SD — File lebih kecil</option>
+                        <?php else: ?>
+                            <option value="1080p" selected>🎬 1080p Full HD — Terbaik</option>
+                            <option value="720p">📱 720p HD — Lebih kecil</option>
+                            <option value="480p">⚡ 480p SD — Paling cepat</option>
+                        <?php endif; ?>
+                    </select>
+
+                    <?php if ($cpIsFree && !$cpIsAdmin): ?>
+                        <a href="harga.php" class="te-quality-upgrade">
+                            <i class="fas fa-crown"></i> Upgrade untuk 1080p
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- V9.8.0: TRANSLATE SUBTITLE PANEL                             -->
+            <!-- ============================================================ -->
+            <!-- V9.131.0: GATE TRANSLATE PRO -->
+            <?php if (!empty($isPremium) || !empty($isAdminUser)): ?>
+            <div class="te-translate-bar" id="translatePanel">
+                <div class="te-translate-head">
+                    <div class="te-translate-title">
+                        <i class="fas fa-language"></i>
+                        <span>Terjemahkan Subtitle</span><span class="te-badge-pro">PRO</span>
+                        <small>Auto translate subtitle ke bahasa lain</small>
+                    </div>
+                </div>
+                <div class="te-translate-row">
+                    <div class="te-translate-select-wrap">
+                        <label for="targetLanguage" class="te-translate-label">
+                            <i class="fas fa-globe"></i> Bahasa Target
+                        </label>
+                        <select id="targetLanguage" class="te-translate-select">
+                            <option value="">— Pilih Bahasa —</option>
+                            <option value="en">English</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ar">Arabic</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ru">Russian</option>
+                            <option value="hi">Hindi</option>
+                            <option value="th">Thai</option>
+                            <option value="vi">Vietnamese</option>
+                            <option value="ms">Malay</option>
+                        </select>
+                    </div>
+                    <button type="button" id="translateBtn" class="te-translate-btn">
+                        <i class="fas fa-magic"></i> <span>Translate Now</span>
+                    </button>
+                    <button type="button" id="translateResetBtn" class="te-translate-btn-secondary" style="display:none;">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                </div>
+                <div id="translateStatus" class="te-translate-status" style="display:none;"></div>
+                <div id="translatePreview" class="te-translate-preview" style="display:none;">
+                    <div class="te-translate-preview-head">
+                        <span><i class="fas fa-eye"></i> Preview Terjemahan</span>
+                        <button type="button" class="te-translate-preview-close" onclick="document.getElementById('translatePreview').style.display='none';">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="translatePreviewBody" class="te-translate-preview-body"></div>
+                </div>
+            </div>
+            <?php else: ?>
+            <!-- V9.131.0: LOCKED - Free user -->
+            <div class="te-translate-bar te-translate-locked" id="translatePanel">
+                <div class="te-translate-head">
+                    <div class="te-translate-title">
+                        <i class="fas fa-language"></i>
+                        <span>Terjemahkan Subtitle</span>
+                        <span class="te-badge-pro">PRO</span>
+                        <small>Auto translate subtitle ke bahasa lain</small>
+                    </div>
+                </div>
+                <div class="te-translate-lock-card">
+                    <i class="fas fa-lock"></i>
+                    <h4>Fitur ini hanya untuk PRO</h4>
+                    <p>Upgrade untuk terjemahkan subtitle ke <strong>15+ bahasa</strong> — English, Japanese, Korean, Arabic, dan lainnya.</p>
+                    <a href="harga.php" class="te-translate-upgrade-btn">
+                        ✨ Upgrade ke PRO — Rp 49.000/bln
+                    </a>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <style>
+
+    /* V9.7.0: Hide Terjemahan Multi-Bahasa (redundant dengan Terjemahkan Subtitle di editor) */
+    #translateSection,
+    .translate-section,
+    .compact-lock-card#translateSection {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+
+            .te-translate-bar {
+                background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(6,182,212,0.03));
+                border: 1px solid rgba(139,92,246,0.25);
+                border-radius: 14px;
+                padding: 18px 20px;
+                margin: 16px 0;
+            }
+            .te-translate-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+            .te-translate-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+            .te-translate-title i { font-size: 1.15rem; color: #a78bfa; }
+            .te-translate-title > span { font-weight: 700; font-size: 0.95rem; color: var(--text, #e8e8ef); }
+            .te-translate-title > small { font-size: 0.75rem; color: var(--text-muted, #94a3b8); }
+            .te-translate-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+            .te-translate-select-wrap { flex: 1; min-width: 180px; }
+            .te-translate-label { display: block; font-size: 0.72rem; color: var(--text-muted, #94a3b8); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; margin-bottom: 6px; }
+            .te-translate-select { width: 100%; padding: 11px 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(139,92,246,0.3); border-radius: 10px; color: var(--text, #e8e8ef); font-family: inherit; font-size: 0.88rem; outline: none; cursor: pointer; }
+            .te-translate-select:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); }
+            .te-translate-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; background: linear-gradient(135deg, #8b5cf6, #06b6d4); border: none; color: white; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit; box-shadow: 0 4px 16px rgba(139,92,246,0.35); white-space: nowrap; }
+            .te-translate-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(139,92,246,0.55); }
+            .te-translate-btn:disabled { opacity: 0.6; cursor: wait; }
+            .te-translate-btn-secondary { display: inline-flex; align-items: center; gap: 6px; padding: 12px 18px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: var(--text-muted, #94a3b8); border-radius: 10px; font-weight: 600; font-size: 0.82rem; cursor: pointer; font-family: inherit; }
+            .te-translate-btn-secondary:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.35); color: #ef4444; }
+            .te-translate-status { margin-top: 12px; padding: 11px 14px; border-radius: 10px; font-size: 0.82rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+            .te-translate-status.loading { background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
+            .te-translate-status.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+            .te-translate-status.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+            .te-translate-preview { margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(139,92,246,0.2); border-radius: 10px; overflow: hidden; }
+            .te-translate-preview-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(139,92,246,0.08); border-bottom: 1px solid rgba(139,92,246,0.15); font-size: 0.8rem; font-weight: 700; color: #a78bfa; }
+            .te-translate-preview-close { background: none; border: none; color: var(--text-muted, #94a3b8); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem; }
+            .te-translate-preview-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
+            .te-translate-preview-body { max-height: 240px; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+            .te-translate-line { display: grid; grid-template-columns: 80px 1fr; gap: 10px; padding: 8px 10px; background: rgba(0,0,0,0.2); border-radius: 8px; border-left: 2px solid rgba(139,92,246,0.4); font-size: 0.82rem; line-height: 1.5; }
+            .te-translate-line-time { font-family: 'Courier New', monospace; font-size: 0.7rem; color: #22d3ee; padding-top: 2px; font-weight: 700; }
+            .te-translate-line-text { color: var(--text, #e8e8ef); }
+            .te-translate-line-original { color: var(--text-muted, #94a3b8); font-size: 0.75rem; margin-top: 2px; font-style: italic; }
+            @media (max-width: 600px) {
+                .te-translate-row { flex-direction: column; align-items: stretch; }
+                .te-translate-btn { width: 100%; justify-content: center; }
+            }
+
+/* V9.131.0: GATE TRANSLATE PRO */
+.te-badge-pro {
+    display: inline-block;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.te-translate-lock-card {
+    background: linear-gradient(135deg, rgba(245,158,11,0.08), rgba(139,92,246,0.05));
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-top: 16px;
+}
+.te-translate-lock-card > i {
+    font-size: 36px;
+    color: #f59e0b;
+    margin-bottom: 12px;
+    display: block;
+}
+.te-translate-lock-card h4 {
+    color: #e2e8f0;
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0 0 8px;
+}
+.te-translate-lock-card p {
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0 0 20px;
+}
+.te-translate-lock-card p strong {
+    color: #f59e0b;
+}
+.te-translate-upgrade-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 14px;
+    text-decoration: none;
+    transition: 0.25s;
+    box-shadow: 0 6px 20px rgba(245,158,11,0.35);
+}
+.te-translate-upgrade-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(245,158,11,0.5);
+}
+            </style>
+            <div class="te-actions">
+                <button id="renderFinalBtn" class="te-btn-primary">
+                    <i class="fas fa-wand-sparkles"></i> <span>Render Video Final</span>
+                </button>
+                <button id="saveProjectBtn" class="te-btn-secondary" title="Simpan sebagai proyek" style="margin-right:8px;">
+                    <i class="fas fa-save"></i> <span>Simpan Proyek</span>
+                </button>
+                <button id="resetEditsBtn" class="te-btn-secondary" title="Reset ke rekomendasi AI">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULT BOX -->
+    <div class="result-box" id="resultBox" style="display:none;">
+        <span class="icon-success"><i class="fas fa-check-circle"></i></span>
+        <h3 id="resultTitle">✅ Video Berhasil Dirapikan!</h3>
+        <div class="duration-info" id="durationInfo"></div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div id="chaptersContainer" style="display:none;margin-top:16px;text-align:left;">
+            <h4 style="font-size:0.9rem;margin-bottom:8px;color:var(--primary);"><i class="fas fa-book"></i> Bab Video</h4>
+            <div class="chapters-box" id="chaptersList"></div>
+        </div>
+        <div class="result-actions">
+            <button class="btn-success" id="openDownloadModalBtn"><i class="fas fa-download"></i> Download Video</button>
+            <button class="btn-secondary" onclick="resetPage()"><i class="fas fa-plus"></i> Proses Video Lain</button>
+        </div>
+    </div>
+
+    <!-- ================= VOICE OVER & TRANSLATE SCRIPTS ================= -->
+    <?php if (!$cpIsFree || $cpIsAdmin): ?>
+        <script>
+            (function() {
+                /* ---------- AI VOICE OVER ---------- */
+                const vo = {
+                    text: document.getElementById('voText'),
+                    voice: document.getElementById('voVoice'),
+                    btn: document.getElementById('voGenerateBtn'),
+                    result: document.getElementById('voResult'),
+                    player: document.getElementById('voPlayer'),
+                    download: document.getElementById('voDownloadBtn'),
+                    reset: document.getElementById('voResetBtn')
+                };
+
+                if (vo.btn) {
+                    let currentVoiceUrl = null;
+
+                    vo.btn.addEventListener('click', async () => {
+                        const text = vo.text.value.trim();
+                        const voice = vo.voice.value;
+
+                        if (!text) return window.toastError && window.toastError('⚠️ Tulis script dulu');
+                        if (text.length > 5000) return window.toastError && window.toastError('⚠️ Maks 5000 karakter');
+
+                        vo.btn.disabled = true;
+                        vo.btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+                        try {
+                            const auth = window.CLIPORA_AUTH || {};
+                            const r = await fetch((auth.apiUrl || '/api') + '/voiceover/generate', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + (auth.token || '')
+                                },
+                                body: JSON.stringify({
+                                    text,
+                                    voice
+                                })
+                            });
+
+                            const data = await r.json();
+                            if (!data.success) throw new Error(data.error || 'Gagal generate');
+
+                            currentVoiceUrl = (auth.baseUrl || '') + data.url;
+                            vo.player.src = currentVoiceUrl;
+                            vo.result.style.display = 'block';
+
+                            if (window.toastSuccess) window.toastSuccess(`✅ Voice over jadi! (${data.size_kb} KB)`);
+                        } catch (e) {
+                            console.error(e);
+                            if (window.toastError) window.toastError('❌ ' + e.message);
+                        } finally {
+                            vo.btn.disabled = false;
+                            vo.btn.innerHTML = '<i class="fas fa-wand-magic-sparkles"></i> Generate';
+                        }
+                    });
+
+                    vo.download.addEventListener('click', () => {
+                        if (!currentVoiceUrl) return;
+                        const a = document.createElement('a');
+                        a.href = currentVoiceUrl;
+                        a.download = 'voiceover.mp3';
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                    });
+
+                    vo.reset.addEventListener('click', () => {
+                        vo.text.value = '';
+                        vo.result.style.display = 'none';
+                        vo.player.src = '';
+                        currentVoiceUrl = null;
+                    });
+                }
+            })();
+
+            (function() {
+                /* ---------- MULTI-BAHASA TRANSLATE ---------- */
+                const tr = {
+                    text: document.getElementById('trText'),
+                    target: document.getElementById('trTargetLang'),
+                    btn: document.getElementById('trTranslateBtn'),
+                    result: document.getElementById('trResult'),
+                    resultLang: document.getElementById('trResultLang'),
+                    resultProvider: document.getElementById('trResultProvider'),
+                    resultText: document.getElementById('trResultText'),
+                    copy: document.getElementById('trCopyBtn'),
+                    reset: document.getElementById('trResetBtn')
+                };
+
+                if (tr.btn) {
+                    let currentTranslation = '';
+
+                    tr.btn.addEventListener('click', async () => {
+                        const text = tr.text.value.trim();
+                        const to = tr.target.value;
+
+                        if (!text) return window.toastError && window.toastError('⚠️ Tempel teks dulu');
+
+                        tr.btn.disabled = true;
+                        tr.btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Translating...';
+
+                        try {
+                            const auth = window.CLIPORA_AUTH || {};
+                            const r = await fetch((auth.apiUrl || '/api') + '/translate', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': 'Bearer ' + (auth.token || '')
+                                },
+                                body: JSON.stringify({
+                                    text,
+                                    from: 'id',
+                                    to
+                                })
+                            });
+
+                            const data = await r.json();
+                            if (!data.success) throw new Error(data.error || 'Translate gagal');
+
+                            currentTranslation = data.translated;
+                            tr.resultLang.textContent = tr.target.options[tr.target.selectedIndex].text;
+                            tr.resultProvider.textContent = 'via ' + (data.provider || 'auto');
+                            tr.resultText.textContent = data.translated;
+                            tr.result.style.display = 'block';
+
+                            if (window.toastSuccess) window.toastSuccess('✅ Berhasil diterjemahkan!');
+                        } catch (e) {
+                            console.error(e);
+                            if (window.toastError) window.toastError('❌ ' + e.message);
+                        } finally {
+                            tr.btn.disabled = false;
+                            tr.btn.innerHTML = '<i class="fas fa-language"></i> Translate';
+                        }
+                    });
+
+                    tr.copy.addEventListener('click', async () => {
+                        if (!currentTranslation) return;
+                        try {
+                            await navigator.clipboard.writeText(currentTranslation);
+                            if (window.toastSuccess) window.toastSuccess('📋 Copied!');
+                        } catch {
+                            if (window.toastError) window.toastError('Gagal copy');
+                        }
+                    });
+
+                    tr.reset.addEventListener('click', () => {
+                        tr.text.value = '';
+                        tr.result.style.display = 'none';
+                        currentTranslation = '';
+                    });
+
+                    // Auto-grow textarea
+                    const trText = document.getElementById('trText');
+                    if (trText) {
+                        const autoGrow = () => {
+                            trText.style.height = 'auto';
+                            trText.style.height = Math.min(trText.scrollHeight, 140) + 'px';
+                        };
+                        trText.addEventListener('input', autoGrow);
+                        setTimeout(autoGrow, 100);
+                    }
+                }
+            })();
+        </script>
+    <?php endif; ?>
+
+</div>
+
+<style>
+    /* ===== SHARED PANEL COMPONENTS ===== */
+    .beta-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 6px;
+        letter-spacing: 0.3px;
+    }
+
+    .beta-purple {
+        color: #a78bfa;
+        background: rgba(139, 92, 246, 0.15);
+    }
+
+    .beta-cyan {
+        color: #22d3ee;
+        background: rgba(6, 182, 212, 0.15);
+    }
+
+    /* ============================================================ */
+    /* COMPACT LOCK CARD (Free User) — V8.7.3                       */
+    /* ============================================================ */
+    .compact-lock-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+        margin: 12px 0;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(6, 182, 212, 0.04));
+        border: 1px solid rgba(139, 92, 246, 0.22);
+        border-radius: 14px;
+        position: relative;
+        overflow: hidden;
+        transition: 0.25s;
+    }
+
+    .compact-lock-card:hover {
+        border-color: rgba(139, 92, 246, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.15);
+    }
+
+    .compact-lock-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, #f59e0b, #d97706);
+    }
+
+    .clc-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(6, 182, 212, 0.1));
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        flex-shrink: 0;
+    }
+
+    .clc-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .clc-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 3px;
+        flex-wrap: wrap;
+    }
+
+    .clc-pro {
+        font-size: 0.55rem;
+        font-weight: 800;
+        padding: 2px 7px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        letter-spacing: 0.6px;
+        box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);
+    }
+
+    .clc-desc {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+
+    .clc-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 18px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-decoration: none;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: 0.2s;
+        box-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+        font-family: inherit;
+        letter-spacing: 0.2px;
+    }
+
+    .clc-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 16px rgba(245, 158, 11, 0.55);
+    }
+
+    .clc-btn i {
+        font-size: 0.7rem;
+    }
+
+    /* ===== TEXTAREA & CONTROLS ===== */
+    .panel-textarea {
+        width: 100%;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.85rem;
+        resize: vertical;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
+    }
+
+    .vo-textarea {
+        min-height: 80px;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .tr-textarea {
+        min-height: 56px;
+        max-height: 140px;
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        overflow-y: auto;
+    }
+
+    .panel-textarea:focus {
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    .tr-textarea:focus {
+        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+
+    .panel-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .panel-row-tight {
+        margin-top: 8px;
+    }
+
+    .panel-select {
+        flex: 1;
+        min-width: 180px;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.85rem;
+        outline: none;
+    }
+
+    .vo-select {
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .tr-select {
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .panel-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.85rem;
+        transition: transform 0.15s, box-shadow 0.2s;
+    }
+
+    .panel-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+    }
+
+    .panel-btn:disabled {
+        opacity: 0.6;
+        cursor: wait;
+    }
+
+    .vo-btn-generate {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
+
+    .tr-btn-translate {
+        background: linear-gradient(135deg, #06b6d4, #0891b2);
+    }
+
+    .panel-btn-outline {
+        flex: 1;
+        padding: 8px;
+        border-radius: 8px;
+        background: transparent;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.8rem;
+        transition: background 0.2s;
+    }
+
+    .vo-btn-outline {
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        color: #a78bfa;
+    }
+
+    .vo-btn-outline:hover {
+        background: rgba(139, 92, 246, 0.1);
+    }
+
+    .tr-btn-copy {
+        border: 1px solid rgba(6, 182, 212, 0.4);
+        color: #22d3ee;
+    }
+
+    .tr-btn-copy:hover {
+        background: rgba(6, 182, 212, 0.1);
+    }
+
+    .panel-btn-ghost {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.8rem;
+        transition: background 0.2s;
+    }
+
+    .panel-btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .panel-result {
+        margin-top: 10px;
+        padding: 12px;
+        border-radius: 10px;
+    }
+
+    .vo-result {
+        background: rgba(139, 92, 246, 0.08);
+        border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    .tr-result {
+        background: rgba(6, 182, 212, 0.08);
+        border: 1px solid rgba(6, 182, 212, 0.25);
+        border-left: 3px solid #06b6d4;
+    }
+
+    .tr-result-head {
+        font-size: 0.7rem;
+        color: #22d3ee;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 6px;
+    }
+
+    .tr-result-provider {
+        opacity: 0.6;
+        margin-left: 6px;
+    }
+
+    .tr-result-text {
+        color: var(--text);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+
+    /* ===== TRANSLATE SECTION STYLING ===== */
+    .translate-section {
+        position: relative;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(8, 145, 178, 0.02));
+        border-left: 3px solid #06b6d4;
+        border-radius: 0 14px 14px 0;
+        padding-left: 18px;
+        overflow: hidden;
+    }
+
+    .translate-section::before {
+        content: '🌐';
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        font-size: 3.5rem;
+        opacity: 0.07;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .translate-section>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    .translate-section .section-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+
+    .tr-lang-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .tr-lang-prefix {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 4px;
+        flex-shrink: 0;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+    }
+
+    .tr-from-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        background: rgba(6, 182, 212, 0.15);
+        color: #22d3ee;
+        border: 1px solid rgba(6, 182, 212, 0.35);
+        border-radius: 6px;
+        font-weight: 800;
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
+    }
+
+    .tr-lang-prefix i {
+        font-size: 0.7rem;
+        opacity: 0.6;
+    }
+
+    /* ===== LEGACY PREMIUM BADGE ===== */
+    .premium-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        font-size: 0.6rem;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 20px;
+        margin-left: 6px;
+        letter-spacing: 0.5px;
+        vertical-align: middle;
+    }
+
+    .checkbox-group.locked {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    .checkbox-group.locked input[type="checkbox"] {
+        cursor: not-allowed;
+    }
+
+    #rapikanBtn:disabled {
+        background: linear-gradient(135deg, #64748b, #475569) !important;
+        cursor: not-allowed !important;
+        opacity: 0.5 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    .setting-group .hint {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        margin-top: 6px;
+        line-height: 1.5;
+    }
+
+    /* === EDITOR STYLES === */
+    .timeline-editor-wrap {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(6, 182, 212, 0.05));
+        border: 1px solid rgba(139, 92, 246, 0.25);
+        border-radius: 18px;
+        padding: 24px;
+        animation: teFadeIn 0.4s ease;
+    }
+
+    @keyframes teFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .te-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .te-header h3 {
+        font-size: 1.15rem;
+        margin: 0 0 6px 0;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .te-header h3 i {
+        color: #8b5cf6;
+    }
+
+    .te-subtitle {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .te-close-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .te-close-btn:hover {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+    }
+
+    .te-player-wrap {
+        position: relative;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 16px;
+        aspect-ratio: 16/9;
+        max-height: 380px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .te-player-wrap video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .te-player-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: 0.3s;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .te-player-wrap:hover .te-player-overlay {
+        opacity: 1;
+    }
+
+    .te-play-btn {
+        pointer-events: auto;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(139, 92, 246, 0.9);
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.5);
+    }
+
+    .te-play-btn:hover {
+        transform: scale(1.1);
+        background: #8b5cf6;
+    }
+
+    .te-play-btn i {
+        margin-left: 4px;
+    }
+
+    .te-preview-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        z-index: 5;
+        animation: tePreviewPulse 1.5s ease-in-out infinite;
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.5);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    @keyframes tePreviewPulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.5);
+        }
+
+        50% {
+            transform: scale(1.04);
+            box-shadow: 0 6px 24px rgba(34, 197, 94, 0.8);
+        }
+    }
+
+    .te-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+    }
+
+    .te-stat-item {
+        text-align: center;
+    }
+
+    .te-stat-label {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .te-stat-value {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .te-stat-value.success {
+        color: #22c55e;
+    }
+
+    .te-stat-value.danger {
+        color: #ef4444;
+    }
+
+    .te-stat-value.primary {
+        color: #8b5cf6;
+    }
+
+    .te-quick-mode {
+        margin: 0 0 20px;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(6, 182, 212, 0.06));
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 14px;
+    }
+
+    .te-qm-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        font-size: 0.85rem;
+        color: var(--text);
+        font-weight: 700;
+        flex-wrap: wrap;
+    }
+
+    .te-qm-header i {
+        color: #8b5cf6;
+        font-size: 1rem;
+    }
+
+    .te-qm-header small {
+        font-weight: 400;
+        color: var(--text-muted);
+        font-size: 0.74rem;
+    }
+
+    .te-qm-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+
+    .te-qm-btn {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 6px;
+        padding: 16px 10px 14px;
+        border-radius: 12px;
+        border: 1.5px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: 0.25s;
+        font-family: inherit;
+    }
+
+    .te-qm-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .te-qm-btn.active {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(6, 182, 212, 0.12));
+        border-color: rgba(139, 92, 246, 0.55);
+        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .te-qm-icon {
+        font-size: 1.8rem;
+        line-height: 1;
+        transition: 0.25s;
+    }
+
+    .te-qm-btn.active .te-qm-icon {
+        transform: scale(1.1);
+    }
+
+    .te-qm-text {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        width: 100%;
+    }
+
+    .te-qm-text strong {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: var(--text);
+        letter-spacing: 0.2px;
+    }
+
+    .te-qm-btn.active .te-qm-text strong {
+        color: #c4b5fd;
+    }
+
+    .te-qm-text small {
+        font-size: 0.68rem;
+        line-height: 1.35;
+        opacity: 0.75;
+    }
+
+    .te-qm-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 0.56rem;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 8px;
+        background: rgba(139, 92, 246, 0.15);
+        color: #a78bfa;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .te-qm-btn.active .te-qm-badge {
+        background: rgba(139, 92, 246, 0.35);
+        color: #ddd6fe;
+    }
+
+    .te-legend-compact {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        flex-wrap: wrap;
+    }
+
+    .te-legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .te-legend-item strong {
+        color: var(--text);
+        font-weight: 700;
+    }
+
+    .te-legend-sep {
+        color: rgba(255, 255, 255, 0.2);
+    }
+
+    .te-legend-dot {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+
+    .te-legend-dot.cut {
+        background: rgba(239, 68, 68, 0.4);
+        border: 2px solid rgba(239, 68, 68, 0.95);
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    }
+
+    .te-legend-dot.keep {
+        background: transparent;
+        border: 2px dashed rgba(255, 255, 255, 0.35);
+    }
+
+    .te-timeline-viewport {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(139, 92, 246, 0.5) rgba(0, 0, 0, 0.2);
+    }
+
+    .te-timeline-viewport::-webkit-scrollbar {
+        height: 10px;
+    }
+
+    .te-timeline-viewport::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+    }
+
+    .te-timeline-viewport::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.5);
+        border-radius: 5px;
+    }
+
+    .te-timeline-zoom-wrap {
+        min-width: 100%;
+        transition: width 0.15s ease;
+    }
+
+    .te-timeline-section {
+        margin-bottom: 20px;
+    }
+
+    .te-time-ruler {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        padding: 0 4px;
+        margin-bottom: 6px;
+        font-family: 'Courier New', monospace;
+        height: 16px;
+        position: relative;
+    }
+
+    .te-time-mark {
+        position: absolute;
+        transform: translateX(-50%);
+        white-space: nowrap;
+    }
+
+    .te-time-mark:first-child {
+        transform: translateX(0);
+    }
+
+    .te-time-mark:last-child {
+        transform: translateX(-100%);
+    }
+
+    .te-timeline {
+        position: relative;
+        height: 80px;
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .te-timeline-track {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+
+    .te-filmstrip {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        overflow: hidden;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .te-filmstrip img {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+
+    .te-filmstrip-loading {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: rgba(0, 0, 0, 0.5);
+        gap: 8px;
+    }
+
+    .te-timeline-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: repeating-linear-gradient(90deg, transparent, transparent calc(10% - 1px), rgba(255, 255, 255, 0.1) calc(10% - 1px), rgba(255, 255, 255, 0.1) 10%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .te-segment {
+        position: absolute;
+        top: 12px;
+        height: 56px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: top 0.15s, height 0.15s, box-shadow 0.15s, background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        min-width: 6px;
+        padding: 0 6px;
+        z-index: 5;
+        backdrop-filter: blur(1px);
+    }
+
+    .te-segment.keep {
+        background: transparent;
+        border: 1.5px dashed rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.5);
+        box-shadow: none;
+    }
+
+    .te-segment.keep:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.4);
+        border-style: solid;
+    }
+
+    .te-segment.cut {
+        background: rgba(239, 68, 68, 0.3);
+        border: 2px solid rgba(239, 68, 68, 0.95);
+        color: #fecaca;
+        box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4);
+    }
+
+    .te-segment.cut:hover {
+        background: rgba(239, 68, 68, 0.45);
+    }
+
+    .te-segment:hover {
+        top: 6px;
+        height: 68px;
+        z-index: 10;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    }
+
+    .te-segment.selected {
+        top: 4px;
+        height: 72px;
+        z-index: 15;
+        box-shadow: 0 0 0 2px #fff, 0 6px 24px rgba(139, 92, 246, 0.6);
+    }
+
+    .te-segment.selected.cut {
+        background: rgba(239, 68, 68, 0.5);
+    }
+
+    .te-segment.selected.keep {
+        background: rgba(255, 255, 255, 0.1);
+        border-style: solid;
+    }
+
+    .te-segment-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        pointer-events: none;
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.4);
+        padding: 2px 6px;
+        border-radius: 4px;
+        backdrop-filter: blur(2px);
+    }
+
+    .te-segment.keep .te-segment-label {
+        color: rgba(255, 255, 255, 0.75);
+        background: rgba(0, 0, 0, 0.55);
+        font-weight: 500;
+    }
+
+    .te-segment.cut .te-segment-label {
+        color: #fff;
+        background: rgba(120, 20, 20, 0.6);
+    }
+
+    .te-segment-handle {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 10px;
+        cursor: ew-resize;
+        background: rgba(255, 255, 255, 0.2);
+        transition: 0.15s;
+        opacity: 0;
+        z-index: 2;
+    }
+
+    .te-segment-handle:hover {
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .te-segment:hover .te-segment-handle {
+        opacity: 1;
+    }
+
+    .te-segment-handle.left {
+        left: 0;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .te-segment-handle.right {
+        right: 0;
+        border-radius: 0 8px 8px 0;
+    }
+
+    /* V3.0.2: Hide tooltip (user request) */
+            .te-tooltip,
+            .te-segment-tooltip,
+            .te-timeline-hint-tip,
+            .te-timeline-hint-tip2,
+            [id*="tooltip"], [id*="Tooltip"],
+            [class*="tooltip"], [class*="Tooltip"] {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+            .te-tooltip {
+        position: fixed;
+        background: rgba(15, 23, 42, 0.98);
+        border: 1px solid rgba(139, 92, 246, 0.5);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        color: #e2e8f0;
+        pointer-events: none;
+        z-index: 9999;
+        white-space: nowrap;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        display: none;
+    }
+
+    .te-tooltip .te-tt-reason {
+        font-weight: 700;
+        margin-bottom: 2px;
+        color: #a78bfa;
+    }
+
+    .te-tooltip .te-tt-time {
+        color: #94a3b8;
+        font-family: 'Courier New', monospace;
+        font-size: 0.7rem;
+    }
+
+    .te-tooltip .te-tt-hint {
+        color: #64748b;
+        font-size: 0.68rem;
+        margin-top: 4px;
+        font-style: italic;
+    }
+
+    .te-playhead {
+        position: absolute;
+        top: -4px;
+        bottom: -4px;
+        width: 2px;
+        background: #f59e0b;
+        pointer-events: none;
+        z-index: 20;
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+        transition: left 0.05s linear;
+        left: 0;
+    }
+
+    .te-playhead-handle {
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 14px;
+        height: 14px;
+        background: #f59e0b;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .te-timeline.preview-mode .te-playhead {
+        background: #22c55e;
+        box-shadow: 0 0 16px rgba(34, 197, 94, 0.9);
+    }
+
+    .te-timeline.preview-mode .te-playhead-handle {
+        background: #22c55e;
+    }
+
+    @keyframes teSegmentSkipped {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.5);
+        }
+    }
+
+    .te-segment.te-skipping {
+        animation: teSegmentSkipped 0.5s ease-in-out;
+    }
+
+    .te-timeline-hint {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        padding: 0 4px;
+    }
+
+    .te-timeline-hint span {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .te-timeline-hint i {
+        color: #8b5cf6;
+        opacity: 0.8;
+    }
+
+    .te-preview-play-bar {
+        margin: 16px 0 20px;
+        padding: 14px;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), rgba(6, 182, 212, 0.06));
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        border-radius: 14px;
+    }
+
+    .te-preview-play-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        cursor: pointer;
+        transition: 0.25s;
+        font-family: inherit;
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4);
+        text-align: left;
+    }
+
+    .te-preview-play-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(34, 197, 94, 0.6);
+    }
+
+    .te-preview-play-btn.playing {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .te-ppb-icon-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .te-ppb-icon-circle i {
+        margin-left: 2px;
+    }
+
+    .te-preview-play-btn.playing .te-ppb-icon-circle i {
+        margin-left: 0;
+    }
+
+    .te-ppb-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .te-ppb-text strong {
+        font-size: 0.95rem;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
+
+    .te-ppb-text small {
+        font-size: 0.72rem;
+        opacity: 0.9;
+    }
+
+    .te-preview-progress-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        padding: 0 6px;
+        font-size: 0.74rem;
+    }
+
+    .te-preview-time {
+        color: var(--text-muted);
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+
+    .te-preview-live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #f87171;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.68rem;
+        letter-spacing: 0.6px;
+        animation: teLivePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes teLivePulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+
+        50% {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+        }
+    }
+
+    .te-live-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+        animation: teLiveDot 1s ease-in-out infinite;
+    }
+
+    @keyframes teLiveDot {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
+    }
+
+    .te-segment-info {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+        border: 1px solid rgba(139, 92, 246, 0.35);
+        border-radius: 12px;
+        margin-bottom: 16px;
+        animation: teSlideIn 0.25s ease;
+    }
+
+    @keyframes teSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .te-si-main {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .te-si-icon {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .te-si-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .te-si-reason {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 3px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .te-si-time {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: 'Courier New', monospace;
+    }
+
+    .te-si-delete {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .te-si-delete:hover {
+        background: rgba(239, 68, 68, 0.3);
+        border-color: #ef4444;
+    }
+
+    .te-si-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .te-si-action {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 12px 10px;
+        border-radius: 10px;
+        border: 1.5px solid;
+        cursor: pointer;
+        transition: 0.2s;
+        font-family: inherit;
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .te-si-action i {
+        font-size: 1.1rem;
+        margin-bottom: 2px;
+    }
+
+    .te-si-action span {
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
+
+    .te-si-action small {
+        font-size: 0.68rem;
+        opacity: 0.7;
+        font-weight: 500;
+    }
+
+    .te-si-action.keep {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: var(--text-muted);
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .te-si-action.keep:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.35);
+        color: var(--text);
+        transform: translateY(-1px);
+    }
+
+    .te-si-action.keep.active {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+    }
+
+    .te-si-action.cut {
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #f87171;
+        background: rgba(239, 68, 68, 0.06);
+    }
+
+    .te-si-action.cut:hover {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.6);
+        transform: translateY(-1px);
+    }
+
+    .te-si-action.cut.active {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-color: #ef4444;
+        color: white;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .te-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .te-btn-primary {
+        flex: 1;
+        min-width: 200px;
+        padding: 15px 24px;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+        color: white;
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.25s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+        font-family: inherit;
+    }
+
+    .te-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(139, 92, 246, 0.6);
+    }
+
+    .te-btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .te-btn-secondary {
+        padding: 15px 20px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: var(--text);
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-family: inherit;
+    }
+
+    .te-btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .te-quality-bar {
+        margin-top: 16px;
+        padding: 14px 16px;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(6, 182, 212, 0.04));
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 12px;
+    }
+
+    .te-quality-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .te-quality-label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .te-quality-label i {
+        color: #8b5cf6;
+    }
+
+    .te-quality-hint {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .te-quality-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .te-quality-select {
+        flex: 1;
+        min-width: 220px;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1.5px solid rgba(139, 92, 246, 0.3);
+        border-radius: 10px;
+        color: var(--text);
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        font-family: inherit;
+        outline: none;
+    }
+
+    .te-quality-select:hover {
+        border-color: rgba(139, 92, 246, 0.6);
+        background: rgba(0, 0, 0, 0.4);
+    }
+
+    .te-quality-select:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    .te-quality-select option {
+        background: #1e1b2e;
+        color: #fff;
+        padding: 8px;
+    }
+
+    .te-quality-select option:disabled {
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    .te-quality-upgrade {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 11px 16px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        border-radius: 10px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: 0.2s;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .te-quality-upgrade:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+    }
+
+    @media (max-width: 640px) {
+        .te-header {
+            flex-direction: column;
+        }
+
+        .te-close-btn {
+            align-self: flex-end;
+        }
+
+        .te-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .te-timeline {
+            height: 68px;
+        }
+
+        .te-segment {
+            top: 10px;
+            height: 48px;
+        }
+
+        .te-segment:hover {
+            top: 4px;
+            height: 60px;
+        }
+
+        .te-timeline-hint {
+            font-size: 0.68rem;
+        }
+
+        .te-actions {
+            flex-direction: column;
+        }
+
+        .te-btn-primary {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .te-ppb-text strong {
+            font-size: 0.88rem;
+        }
+
+        .te-ppb-text small {
+            font-size: 0.68rem;
+        }
+
+        .te-qm-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .te-qm-btn {
+            flex-direction: row;
+            text-align: left;
+            padding: 14px;
+            gap: 14px;
+        }
+
+        .te-qm-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .te-qm-text {
+            flex: 1;
+        }
+
+        .te-qm-badge {
+            position: static;
+            margin-left: auto;
+        }
+
+        .te-si-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .te-si-action {
+            flex-direction: row;
+            text-align: left;
+            gap: 10px;
+        }
+
+        .te-si-action i {
+            margin-bottom: 0;
+        }
+
+        .te-si-action small {
+            margin-left: auto;
+        }
+
+        .te-legend-compact {
+            font-size: 0.72rem;
+        }
+
+        .te-quality-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .te-quality-select {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .te-quality-upgrade {
+            justify-content: center;
+        }
+
+        .tr-lang-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .tr-lang-prefix {
+            justify-content: center;
+        }
+
+        .tr-select {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .compact-lock-card {
+            flex-wrap: wrap;
+            padding: 14px;
+            gap: 12px;
+        }
+
+        .clc-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+        }
+
+        .clc-title {
+            font-size: 0.85rem;
+        }
+
+        .clc-desc {
+            font-size: 0.68rem;
+        }
+
+        .clc-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 11px 18px;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+    }
+</style>

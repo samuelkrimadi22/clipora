@@ -1,0 +1,606 @@
+<?php
+// ============================================================
+// V9.630.0: Admin = PRO (override FINAL di footer)
+// Footer di-include paling akhir, jadi ini PASTI jalan
+// ============================================================
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
+if (!empty($_SESSION['is_admin'])) {
+}
+// ============================================================
+ // V9.48.0: Fix footer links + logo path ?>
+<?php
+$userPlan = $userPlan ?? ($_SESSION['user_plan'] ?? 'free');
+$isAdmin = $isAdmin ?? (!empty($_SESSION['is_admin']));
+$isLoggedIn = $isLoggedIn ?? !empty($_SESSION['user_id']);
+
+// HANYA IG, TikTok, YouTube
+$socialLinks = [
+    'instagram' => 'https://instagram.com/clipora.id',
+    'tiktok'    => 'https://tiktok.com/@clipora.id',
+    'youtube'   => 'https://youtube.com/@clipora',
+];
+?>
+
+<style>
+    /* ============================================================ */
+    /* FOOTER V4 — ULTRA MINIMALIS                                   */
+    /* ============================================================ */
+    .footer-v4 {
+        background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.15));
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        margin-top: 80px;
+        padding: 52px 24px 36px;
+        font-family: 'Inter', -apple-system, sans-serif;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .footer-v4 * {
+        box-sizing: border-box;
+    }
+
+    /* === LOGO + NAME === */
+    .footer-v4 .fv4-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        text-decoration: none;
+    }
+
+    .footer-v4 .fv4-brand img {
+        width: 34px !important;
+        height: 34px !important;
+        max-width: 34px !important;
+        border-radius: 9px;
+        object-fit: contain;
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        padding: 3px;
+        flex-shrink: 0;
+    }
+
+    .footer-v4 .fv4-brand-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.3px;
+    }
+
+    /* === TAGLINE === */
+    .footer-v4 .fv4-tagline {
+        font-size: 0.78rem;
+        color: #6b7280;
+        margin: 0 0 26px;
+        letter-spacing: 0.2px;
+    }
+
+    /* === SOSMED === */
+    .footer-v4 .fv4-socials {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 28px;
+    }
+
+    .footer-v4 .fv4-social {
+        width: 40px;
+        height: 40px;
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #94a3b8;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: 0.25s;
+    }
+
+    .footer-v4 .fv4-social:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    .footer-v4 .fv4-social.ig:hover {
+        background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+        border-color: transparent;
+    }
+
+    .footer-v4 .fv4-social.tt:hover {
+        background: linear-gradient(135deg, #25f4ee, #fe2c55);
+        border-color: transparent;
+    }
+
+    .footer-v4 .fv4-social.yt:hover {
+        background: #ff0000;
+        border-color: transparent;
+    }
+
+    /* === LINKS (INLINE) === */
+    .footer-v4 .fv4-links {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        margin-bottom: 22px;
+        font-size: 0.8rem;
+    }
+
+    .footer-v4 .fv4-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: 0.2s;
+    }
+
+    .footer-v4 .fv4-links a:hover {
+        color: #f59e0b;
+        background: rgba(245, 158, 11, 0.06);
+    }
+
+    .footer-v4 .fv4-links .dot {
+        color: #374151;
+        align-self: center;
+        font-size: 0.5rem;
+    }
+
+    /* === COPYRIGHT === */
+    .footer-v4 .fv4-copy {
+        font-size: 0.74rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    .footer-v4 .fv4-copy strong {
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .footer-v4 .fv4-copy .heart {
+        color: #ef4444;
+        display: inline-block;
+        margin: 0 2px;
+        animation: fv4HeartBeat 1.6s ease-in-out infinite;
+    }
+
+    @keyframes fv4HeartBeat {
+        0%, 100% { transform: scale(1); }
+        20% { transform: scale(1.18); }
+        40% { transform: scale(1); }
+        60% { transform: scale(1.12); }
+        80% { transform: scale(1); }
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 600px) {
+        .footer-v4 {
+            margin-top: 60px;
+            padding: 40px 20px 28px;
+        }
+
+        .footer-v4 .fv4-brand img {
+            width: 30px !important;
+            height: 30px !important;
+        }
+
+        .footer-v4 .fv4-brand-name {
+            font-size: 1.05rem;
+        }
+
+        .footer-v4 .fv4-social {
+            width: 38px;
+            height: 38px;
+            font-size: 0.9rem;
+        }
+
+        .footer-v4 .fv4-links {
+            font-size: 0.76rem;
+            gap: 4px 4px;
+        }
+
+        .footer-v4 .fv4-copy {
+            font-size: 0.7rem;
+        }
+    }
+</style>
+
+<!-- ============================================================ -->
+<!-- FOOTER HTML                                                    -->
+<!-- ============================================================ -->
+<footer class="footer-v4">
+<!-- Brand -->
+<a href="index.php" class="fv4-brand">
+    <img src="logo_clipora.png" alt="<?= APP_NAME ?>">
+    <span class="fv4-brand-name"><?= APP_NAME ?></span>
+</a>
+
+    <!-- Tagline -->
+    <p class="fv4-tagline"><?= APP_TAGLINE ?></p>
+
+    <!-- Sosmed (3 only) -->
+    <div class="fv4-socials">
+        <a href="<?= $socialLinks['instagram'] ?>" target="_blank" rel="noopener" class="fv4-social ig" aria-label="Instagram">
+            <i class="fab fa-instagram"></i>
+        </a>
+        <a href="<?= $socialLinks['tiktok'] ?>" target="_blank" rel="noopener" class="fv4-social tt" aria-label="TikTok">
+            <i class="fab fa-tiktok"></i>
+        </a>
+        <a href="<?= $socialLinks['youtube'] ?>" target="_blank" rel="noopener" class="fv4-social yt" aria-label="YouTube">
+            <i class="fab fa-youtube"></i>
+        </a>
+    </div>
+
+    <!-- Links -->
+    <nav class="fv4-links">
+        <a href="harga.php">Harga</a>
+        <span class="dot">●</span>
+        <a href="panduan.php">Panduan</a>
+        <span class="dot">●</span>
+        <a href="faq.php">FAQ</a>
+        <span class="dot">●</span>
+        <a href="kontak.php">Kontak</a>
+        <span class="dot">●</span>
+        <a href="syarat-ketentuan.php">Syarat</a>
+        <span class="dot">●</span>
+        <a href="kebijakan-privasi.php">Privasi</a>
+    </nav>
+
+    <!-- Copyright -->
+    <p class="fv4-copy">
+        &copy; <?= date('Y') ?> <strong><?= APP_NAME ?></strong> <?= APP_VERSION ?>
+        — Dibuat dengan <span class="heart">â¤</span> untuk content creator Indonesia
+    </p>
+
+</footer>
+
+<!-- ============================================================ -->
+<!-- BACK TO TOP                                                    -->
+<!-- ============================================================ -->
+<button class="back-to-top" id="backToTop" aria-label="Kembali ke atas">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<!-- ============================================================ -->
+<!-- TOAST CONTAINER                                                -->
+<!-- ============================================================ -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- ============================================================ -->
+<!-- CONFIRM DIALOG                                                 -->
+<!-- ============================================================ -->
+<div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-box">
+        <div class="confirm-icon">
+            <i class="fas fa-question-circle" id="confirmIcon"></i>
+        </div>
+        <h3 id="confirmTitle">Konfirmasi</h3>
+        <p id="confirmMessage">Apakah Anda yakin?</p>
+        <div class="confirm-actions">
+            <button class="confirm-btn confirm-cancel" id="confirmCancel">Batal</button>
+            <button class="confirm-btn confirm-ok" id="confirmOk">Ya, Lanjutkan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- GLOBAL LOADING                                                 -->
+<!-- ============================================================ -->
+<div class="global-loading" id="globalLoading">
+    <div class="loading-spinner"></div>
+    <p class="loading-text" id="globalLoadingText">Memuat...</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- NOSCRIPT                                                       -->
+<!-- ============================================================ -->
+<noscript>
+    <div style="position:fixed;top:0;left:0;right:0;background:#ef4444;color:white;padding:12px;text-align:center;z-index:9999;font-family:sans-serif;">
+        <i class="fas fa-exclamation-triangle"></i> JavaScript diperlukan untuk menggunakan <?= APP_NAME ?>.
+    </div>
+</noscript>
+
+<!-- ============================================================ -->
+<!-- GLOBAL CONFIG & UTILITIES                                      -->
+<!-- ============================================================ -->
+<script>
+    // ✅ V8.8.2: Global config — semua dibungkus supaya tidak error kalau undefined
+    window.BASE_URL    = '<?= defined("BASE_URL") ? BASE_URL : (defined("API_URL") ? API_URL : "http://localhost:3000") ?>';
+    window.API_URL     = '<?= defined("API_URL") ? API_URL : "http://localhost:3000/api" ?>';
+    window.MAX_FILE_SIZE = <?= defined("MAX_FILE_SIZE") ? (int)MAX_FILE_SIZE : 524288000 ?>;
+    window.IS_LOGGED_IN = <?= !empty($isLoggedIn) ? 'true' : 'false' ?>;
+    window.IS_ADMIN    = <?= !empty($isAdmin) ? 'true' : 'false' ?>;
+    window.USER_PLAN   = '<?= htmlspecialchars($userPlan, ENT_QUOTES) ?>';
+    window.APP_NAME_JS = '<?= APP_NAME ?>';
+    window.APP_VERSION_JS = '<?= APP_VERSION ?>';
+
+    // Shortcut untuk kompatibilitas dengan kode lama (main.js, autoclip.js)
+    // V2.0.0: DUPLICATE removed — already in header.php
+// const BASE_URL = window.BASE_URL;
+    // V2.0.0: DUPLICATE removed — already in header.php
+// const API_URL = window.API_URL;
+    // V2.0.0: DUPLICATE removed — already in header.php
+// const MAX_FILE_SIZE = window.MAX_FILE_SIZE;
+    // V2.0.0: DUPLICATE removed — already declared in header.php
+// const IS_LOGGED_IN = window.IS_LOGGED_IN;
+    // V2.0.0: DUPLICATE removed — already declared in header.php
+// const IS_ADMIN = window.IS_ADMIN;
+    window.USER_PLAN   = '<?= htmlspecialchars($userPlan, ENT_QUOTES) ?>';
+    const APP_NAME_JS = window.APP_NAME_JS;
+    const APP_VERSION_JS = window.APP_VERSION_JS;
+
+    // V8.7.0 SECURITY: clipora_token & cookie auth lain sekarang HttpOnly
+    const PROTECTED_COOKIES = ['clipora_token', 'clipora_username', 'clipora_plan', 'clipora_is_admin'];
+
+    function getCookie(name) {
+        if (PROTECTED_COOKIES.includes(name)) {
+            return (window.CLIPORA_AUTH && window.CLIPORA_AUTH.token) || null;
+        }
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    function setCookie(name, value, days = 7) {
+        if (PROTECTED_COOKIES.includes(name)) {
+            console.warn(`[Security] ${name} adalah HttpOnly, tidak bisa di-set dari JS.`);
+            return;
+        }
+        const expires = new Date(Date.now() + days * 86400000).toUTCString();
+        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+    }
+
+    function deleteCookie(name) {
+        if (PROTECTED_COOKIES.includes(name)) {
+            console.warn(`[Security] ${name} adalah HttpOnly, harus dihapus dari server.`);
+            return;
+        }
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+    }
+
+    // V8.8.2: Expose AUTH_TOKEN ke window supaya main.js & autoclip.js bisa baca
+    window.AUTH_TOKEN = (window.CLIPORA_AUTH && window.CLIPORA_AUTH.token) || null;
+    let AUTH_TOKEN = window.AUTH_TOKEN;
+
+    // ============ TOAST ============
+    function showToast(message, type = 'info', duration = 4000) {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${message}</span><button class="toast-close" aria-label="Tutup">&times;</button>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        const closeToast = () => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        };
+        toast.querySelector('.toast-close').addEventListener('click', closeToast);
+        if (duration > 0) setTimeout(closeToast, duration);
+    }
+    window.toastSuccess = (msg) => showToast(msg, 'success');
+    window.toastError = (msg) => showToast(msg, 'error');
+    window.toastWarning = (msg) => showToast(msg, 'warning');
+    window.toastInfo = (msg) => showToast(msg, 'info');
+
+    // ============ CONFIRM ============
+    function showConfirm(options = {}) {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('confirmOverlay');
+            const title = document.getElementById('confirmTitle');
+            const message = document.getElementById('confirmMessage');
+            const icon = document.getElementById('confirmIcon');
+            const okBtn = document.getElementById('confirmOk');
+            const cancelBtn = document.getElementById('confirmCancel');
+            if (!overlay) {
+                resolve(false);
+                return;
+            }
+
+            title.textContent = options.title || 'Konfirmasi';
+            message.textContent = options.message || 'Apakah Anda yakin?';
+            const iconMap = {
+                warning: 'fa-exclamation-triangle',
+                danger: 'fa-exclamation-circle',
+                info: 'fa-question-circle'
+            };
+            const iconType = options.type || 'info';
+            icon.className = `fas ${iconMap[iconType] || iconMap.info}`;
+            okBtn.textContent = options.okText || 'Ya, Lanjutkan';
+            cancelBtn.textContent = options.cancelText || 'Batal';
+            okBtn.style.background = iconType === 'danger' ?
+                'linear-gradient(135deg, #ef4444, #dc2626)' :
+                'linear-gradient(135deg, var(--primary), var(--primary-dark))';
+            overlay.classList.add('active');
+
+            const cleanup = () => {
+                overlay.classList.remove('active');
+                okBtn.removeEventListener('click', onOk);
+                cancelBtn.removeEventListener('click', onCancel);
+                overlay.removeEventListener('click', onOverlay);
+            };
+            const onOk = () => { cleanup(); resolve(true); };
+            const onCancel = () => { cleanup(); resolve(false); };
+            const onOverlay = (e) => { if (e.target === overlay) onCancel(); };
+            okBtn.addEventListener('click', onOk);
+            cancelBtn.addEventListener('click', onCancel);
+            overlay.addEventListener('click', onOverlay);
+        });
+    }
+    window.showConfirm = showConfirm;
+
+    // ============ LOADING ============
+    function showLoading(text = 'Memuat...') {
+        const el = document.getElementById('globalLoading');
+        const txt = document.getElementById('globalLoadingText');
+        if (el) {
+            if (txt) txt.textContent = text;
+            el.classList.add('active');
+        }
+    }
+    function hideLoading() {
+        const el = document.getElementById('globalLoading');
+        if (el) el.classList.remove('active');
+    }
+    window.showLoading = showLoading;
+    window.hideLoading = hideLoading;
+
+    // ============ API FETCH ============
+    async function apiFetch(url, options = {}) {
+        try {
+            options.headers = options.headers || {};
+            if (AUTH_TOKEN && !options.headers['Authorization']) {
+                options.headers['Authorization'] = 'Bearer ' + AUTH_TOKEN;
+            }
+            const response = await fetch(url, { cache: 'no-store', ...options });
+            if (response.status === 401) {
+                const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
+                if (!isAuthEndpoint) {
+                    toastWarning('Sesi Anda telah berakhir. Silakan login kembali.');
+                    setTimeout(() => {
+                        window.location.href = 'logout.php';
+                    }, 2000);
+                    throw new Error('Session expired');
+                }
+            }
+            return response;
+        } catch (error) {
+            if (error.message !== 'Session expired') console.error('API Error:', error);
+            throw error;
+        }
+    }
+    window.apiFetch = apiFetch;
+
+    // ============ LOGOUT ============
+    async function logoutUser(e) {
+        if (e) e.preventDefault();
+        const confirmed = await showConfirm({
+            title: 'Logout',
+            message: 'Apakah Anda yakin ingin keluar dari akun Anda?',
+            type: 'warning',
+            okText: 'Ya, Logout'
+        });
+        if (!confirmed) return;
+
+        try {
+            await fetch(`${API_URL}/auth/logout`, {
+                method: 'POST',
+                headers: AUTH_TOKEN ? { 'Authorization': 'Bearer ' + AUTH_TOKEN } : {}
+            });
+        } catch (err) {
+            console.warn('Logout API error:', err);
+        }
+
+        toastSuccess('Anda berhasil logout');
+        setTimeout(() => window.location.href = 'logout.php', 500);
+    }
+    window.logoutUser = logoutUser;
+
+    // ============ BACK TO TOP ============
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) backToTopBtn.classList.add('show');
+            else backToTopBtn.classList.remove('show');
+        });
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // ============ KEYBOARD SHORTCUT ============
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay.active, .confirm-overlay.active').forEach(el => {
+                el.classList.remove('active');
+            });
+        }
+    });
+
+    // ============ NETWORK STATUS ============
+    window.addEventListener('online', () => toastSuccess('Koneksi kembali online'));
+    window.addEventListener('offline', () => toastError('Koneksi internet terputus'));
+
+    // ============ CONSOLE BRANDING ============
+    console.log(`%c🚀 ${APP_NAME_JS} ${APP_VERSION_JS}`,
+        'color: #f59e0b; font-size: 20px; font-weight: bold; padding: 8px;'
+    );
+    console.log('%cCreate Better Videos with AI', 'color: #94a3b8; font-size: 12px;');
+</script>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<!-- ============================================================ -->
+<!-- V8.9.21: UPLOAD PROGRESS UTILITY                              -->
+<!-- Harus load SEBELUM main.js — main.js butuh ini                  -->
+<!-- ============================================================ -->
+<script src="assets/js/upload-progress.js?v=<?= filemtime(__DIR__ . '/../assets/js/upload-progress.js') ?>"></script>
+
+<!-- ============================================================ -->
+<!-- MAIN APP                                                       -->
+<!-- ============================================================ -->
+<?php
+// V1.0.0: EXCLUDE mojibake-fix.js & main.js di halaman projects.php
+// karena menyebabkan konflik (menghapus #prjContainer)
+$isProjectsPage = basename($_SERVER['PHP_SELF']) === 'projects.php';
+if (!$isProjectsPage):
+?>
+<!-- <script src="assets/js/mojibake-fix.js?v= <?= time() ?>"></script> -->
+<script src="assets/js/main.js?v=<?= time() ?>"></script>
+<script src="assets/js/project-modal.js?v=<?= filemtime(__DIR__ . '/../assets/js/project-modal.js') ?>"></script>
+<?php endif; ?>
+
+<!-- ============================================================ -->
+<!-- V8.8.2: SOCKET EXPOSE FALLBACK                                 -->
+<!-- Kalau main.js belum expose window.socket, kita patch di sini   -->
+<!-- ============================================================ -->
+<script>
+    (function() {
+        let tries = 0;
+        const iv = setInterval(() => {
+            tries++;
+            // Coba akses `socket` dari scope global (main.js pakai `let socket`)
+            // Kalau sudah ada tapi belum di-expose ke window, kita expose
+            try {
+                if (typeof socket !== 'undefined' && socket && socket.on && !window.socket) {
+                    window.socket = socket;
+                    console.log('🔌 [Footer] Fallback: exposed socket to window.socket');
+                    clearInterval(iv);
+                    return;
+                }
+            } catch (e) { /* socket belum dideklarasi */ }
+
+            if (tries > 30) clearInterval(iv); // 30 × 200ms = 6 detik
+        }, 200);
+    })();
+</script>
+
+<!-- ============================================================ -->
+<!-- V8.7.0: TIMELINE EDITOR                                       -->
+<!-- ============================================================ -->
+<?php
+$editorJsPath = __DIR__ . '/../assets/js/editor-timeline.js';
+$editorVer = file_exists($editorJsPath) ? filemtime($editorJsPath) : time();
+?>
+<script src="assets/js/editor-timeline.js?v=<?= $editorVer ?>"></script>
+<script src="assets/js/timeline-edit.js?v=<?= filemtime(__DIR__ . '/../assets/js/timeline-edit.js') ?>"></script>
+<script src="assets/js/timeline-copy.js?v=<?= filemtime(__DIR__ . '/../assets/js/timeline-copy.js') ?>"></script>
+<script src="assets/js/auto-sync-state.js?v=<?= filemtime(__DIR__ . '/../assets/js/auto-sync-state.js') ?>"></script>
+<script src="assets/js/timeline-undo.js?v=<?= filemtime(__DIR__ . '/../assets/js/timeline-undo.js') ?>"></script>
+
+</body>
+
+</html>
