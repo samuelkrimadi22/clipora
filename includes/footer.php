@@ -25,7 +25,7 @@ $socialLinks = [
 
 <style>
     /* ============================================================ */
-    /* FOOTER V4 €” ULTRA MINIMALIS                                   */
+    /* FOOTER V4 â‚¬â€ ULTRA MINIMALIS                                   */
     /* ============================================================ */
     .footer-v4 {
         background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.15));
@@ -242,22 +242,22 @@ $socialLinks = [
     <!-- Links -->
     <nav class="fv4-links">
         <a href="harga.php">Harga</a>
-        <span class="dot">—</span>
+        <span class="dot">â€”ÂÂ</span>
         <a href="panduan.php">Panduan</a>
-        <span class="dot">—</span>
+        <span class="dot">â€”ÂÂ</span>
         <a href="faq.php">FAQ</a>
-        <span class="dot">—</span>
+        <span class="dot">â€”ÂÂ</span>
         <a href="kontak.php">Kontak</a>
-        <span class="dot">—</span>
+        <span class="dot">â€”ÂÂ</span>
         <a href="syarat-ketentuan.php">Syarat</a>
-        <span class="dot">—</span>
+        <span class="dot">â€”ÂÂ</span>
         <a href="kebijakan-privasi.php">Privasi</a>
     </nav>
 
     <!-- Copyright -->
     <p class="fv4-copy">
         &copy; <?= date('Y') ?> <strong><?= APP_NAME ?></strong> <?= APP_VERSION ?>
-        €” Dibuat dengan <span class="heart">¢¤</span> untuk content creator Indonesia
+        â‚¬â€ Dibuat dengan <span class="heart">Â¢ÂÂ¤</span> untuk content creator Indonesia
     </p>
 
 </footer>
@@ -312,7 +312,7 @@ $socialLinks = [
 <!-- GLOBAL CONFIG & UTILITIES                                      -->
 <!-- ============================================================ -->
 <script>
-    // œ… V8.8.2: Global config €” semua dibungkus supaya tidak error kalau undefined
+    // Å“â€¦ V8.8.2: Global config â‚¬â€ semua dibungkus supaya tidak error kalau undefined
     window.BASE_URL    = '<?= defined("BASE_URL") ? BASE_URL : (defined("API_URL") ? API_URL : "http://localhost:3000") ?>';
     window.API_URL     = '<?= defined("API_URL") ? API_URL : "http://localhost:3000/api" ?>';
     window.MAX_FILE_SIZE = <?= defined("MAX_FILE_SIZE") ? (int)MAX_FILE_SIZE : 524288000 ?>;
@@ -323,15 +323,15 @@ $socialLinks = [
     window.APP_VERSION_JS = '<?= APP_VERSION ?>';
 
     // Shortcut untuk kompatibilitas dengan kode lama (main.js, autoclip.js)
-    // V2.0.0: DUPLICATE removed €” already in header.php
+    // V2.0.0: DUPLICATE removed â‚¬â€ already in header.php
 // const BASE_URL = window.BASE_URL;
-    // V2.0.0: DUPLICATE removed €” already in header.php
+    // V2.0.0: DUPLICATE removed â‚¬â€ already in header.php
 // const API_URL = window.API_URL;
-    // V2.0.0: DUPLICATE removed €” already in header.php
+    // V2.0.0: DUPLICATE removed â‚¬â€ already in header.php
 // const MAX_FILE_SIZE = window.MAX_FILE_SIZE;
-    // V2.0.0: DUPLICATE removed €” already declared in header.php
+    // V2.0.0: DUPLICATE removed â‚¬â€ already declared in header.php
 // const IS_LOGGED_IN = window.IS_LOGGED_IN;
-    // V2.0.0: DUPLICATE removed €” already declared in header.php
+    // V2.0.0: DUPLICATE removed â‚¬â€ already declared in header.php
 // const IS_ADMIN = window.IS_ADMIN;
     window.USER_PLAN   = '<?= htmlspecialchars($userPlan, ENT_QUOTES) ?>';
     const APP_NAME_JS = window.APP_NAME_JS;
@@ -492,7 +492,7 @@ $socialLinks = [
     window.addEventListener('offline', () => toastError('Koneksi internet terputus'));
 
     // ============ CONSOLE BRANDING ============
-    console.log(`%cš€ ${APP_NAME_JS} ${APP_VERSION_JS}`,
+    console.log(`%cÅ¡â‚¬ ${APP_NAME_JS} ${APP_VERSION_JS}`,
         'color: #f59e0b; font-size: 20px; font-weight: bold; padding: 8px;'
     );
     console.log('%cCreate Better Videos with AI', 'color: #94a3b8; font-size: 12px;');
@@ -502,7 +502,7 @@ $socialLinks = [
 
 <!-- ============================================================ -->
 <!-- V8.9.21: UPLOAD PROGRESS UTILITY                              -->
-<!-- Harus load SEBELUM main.js €” main.js butuh ini                  -->
+<!-- Harus load SEBELUM main.js â‚¬â€ main.js butuh ini                  -->
 <!-- ============================================================ -->
 <script src="assets/js/upload-progress.js?v=<?= filemtime(__DIR__ . '/../assets/js/upload-progress.js') ?>"></script>
 
@@ -516,7 +516,7 @@ $isProjectsPage = basename($_SERVER['PHP_SELF']) === 'projects.php';
 if (!$isProjectsPage):
 ?>
 <!-- <script src="assets/js/mojibake-fix.js?v= <?= time() ?>"></script> -->
-<script src="assets/js/main.js?v=<?= time() ?>"></script>
+<script src="assets/js/main_fix_final.js?v=<?= time() ?>"></script>
 <script src="assets/js/project-modal.js?v=<?= filemtime(__DIR__ . '/../assets/js/project-modal.js') ?>"></script>
 <?php endif; ?>
 
@@ -534,13 +534,13 @@ if (!$isProjectsPage):
             try {
                 if (typeof socket !== 'undefined' && socket && socket.on && !window.socket) {
                     window.socket = socket;
-                    console.log('??Œ [Footer] Fallback: exposed socket to window.socket');
+                    console.log('??Å’ [Footer] Fallback: exposed socket to window.socket');
                     clearInterval(iv);
                     return;
                 }
             } catch (e) { /* socket belum dideklarasi */ }
 
-            if (tries > 30) clearInterval(iv); // 30 — 200ms = 6 detik
+            if (tries > 30) clearInterval(iv); // 30 â€” 200ms = 6 detik
         }, 200);
     })();
 </script>
