@@ -516,7 +516,7 @@ $isProjectsPage = basename($_SERVER['PHP_SELF']) === 'projects.php';
 if (!$isProjectsPage):
 ?>
 <!-- <script src="assets/js/mojibake-fix.js?v= <?= time() ?>"></script> -->
-<script src="assets/js/main_fix_final.js?v=<?= time() ?>"></script>
+<script src="assets/js/main.js?v=<?= time() ?>"></script>
 <script src="assets/js/project-modal.js?v=<?= filemtime(__DIR__ . '/../assets/js/project-modal.js') ?>"></script>
 <?php endif; ?>
 
